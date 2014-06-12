@@ -1,0 +1,552 @@
+From 311785b4bf390798a41c084cee34ef529410478e Mon Sep 17 00:00:00 2001
+From: Johann F <j.fischer@fh-bingen.de>
+Date: Thu, 12 Jun 2014 19:34:41 +0200
+Subject: [PATCH] Add AM335X phyBOARD-Wega device tree source file
+
+---
+ arch/arm/boot/dts/Makefile                  |   1 +
+ arch/arm/boot/dts/am335x-phy-board-wega.dts | 520 ++++++++++++++++++++++++++++
+ 2 files changed, 521 insertions(+)
+ create mode 100644 arch/arm/boot/dts/am335x-phy-board-wega.dts
+
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index 5986ff6..8e89825 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -291,6 +291,7 @@ dtb-$(CONFIG_SOC_AM33XX) += am335x-base0033.dtb \
+ 	am335x-boneblack.dtb \
+ 	am335x-evm.dtb \
+ 	am335x-evmsk.dtb \
++	am335x-phy-board-wega.dtb \
+ 	am335x-nano.dtb
+ dtb-$(CONFIG_ARCH_OMAP4) += omap4-duovero-parlor.dtb \
+ 	omap4-panda.dtb \
+diff --git a/arch/arm/boot/dts/am335x-phy-board-wega.dts b/arch/arm/boot/dts/am335x-phy-board-wega.dts
+new file mode 100644
+index 0000000..5f1eaf3
+--- /dev/null
++++ b/arch/arm/boot/dts/am335x-phy-board-wega.dts
+@@ -0,0 +1,520 @@
++/*
++ * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
++ * Copyright (C) 2014 Johann Fischer
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ */
++/dts-v1/;
++
++#include "am33xx.dtsi"
++
++/ {
++	model = "Phytec Wega-SBC AM335x";
++	compatible = "phytec,phycore-am335x", "phytec,pcm051", "ti,am33xx";
++
++	cpus {
++		cpu@0 {
++			cpu0-supply = <&vdd1_reg>;
++		};
++	};
++
++	memory {
++		device_type = "memory";
++		reg = <0x80000000 0x10000000>; /* 256 MB */
++	};
++
++	vbat: fixedregulator@0 {
++		compatible = "regulator-fixed";
++		regulator-name = "vbat";
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		regulator-boot-on;
++	};
++
++	wl12xx_vmmc: fixedregulator@2 {
++		pinctrl-names = "default";
++		pinctrl-0 = <&wl12xx_gpio>;
++		compatible = "regulator-fixed";
++		regulator-name = "vwl1271";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		gpio = <&gpio0 7 0>;
++		startup-delay-us = <70000>;
++		enable-active-high;
++	};
++
++	panel {
++		compatible = "ti,tilcdc,panel";
++		status = "okay";
++		pinctrl-names = "default";
++		pinctrl-0 = <&lcd_pins_s0>;
++		panel-info {
++			ac-bias           = <255>;
++			//ac-bias           = <40>;
++			ac-bias-intrpt    = <0>;
++			dma-burst-sz      = <16>;
++			bpp               = <32>;
++			fdd               = <0x80>;
++			sync-edge         = <0>;
++			sync-ctrl         = <1>;
++			raster-order      = <0>;
++			fifo-th           = <0>;
++		};
++		display-timings {
++			native-mode = <&timing0>;
++			timing0: 480x272 {
++				clock-frequency = <14000000>;
++				hactive = <480>;
++				vactive = <272>;
++				hfront-porch = <2>;
++				hback-porch = <2>;
++				hsync-len = <41>;
++				vback-porch = <2>;
++				vfront-porch = <2>;
++				vsync-len = <10>;
++				hsync-active = <0>;
++				vsync-active = <0>;
++				de-active = <1>;
++				pixelclk-active = <0>;
++			};
++		};
++	};
++
++	sound {
++		compatible = "ti,da830-evm-audio";
++		ti,model = "AM335x-WEGA";
++		ti,audio-codec = <&tlv320aic3007>;
++		//ti,audio-codec = <&tlv320aic3x>;
++		ti,mcasp-controller = <&mcasp0>;
++		ti,codec-clock-rate = <12000000>;
++		ti,audio-routing =
++  			//"Speaker",		"MONO_LOUT",
++			"Line Out",             "LLOUT",
++			"Line Out",             "RLOUT",
++			"LINE1L",               "Line In",
++			"LINE1R",               "Line In";
++	};
++};
++
++&am33xx_pinmux {
++	pcm051_led_pins: pinmux_pcm051_led_pins {
++		pinctrl-single,pins = <
++			0x80 (MUX_MODE7)
++			0x84 (MUX_MODE7)
++		>;
++	};
++
++	uart0_pins: pinmux_uart0_pins {
++		pinctrl-single,pins = <
++			0x170 (PIN_INPUT_PULLUP | MUX_MODE0)	/* uart0_rxd.uart0_rxd */
++			0x174 (PIN_OUTPUT_PULLDOWN | MUX_MODE0)	/* uart0_txd.uart0_txd */
++		>;
++	};
++
++	uart2_pins: pinmux_uart2_pins {
++		pinctrl-single,pins = <
++			0x12c (PIN_INPUT_PULLUP | MUX_MODE1)	/* gmii1_txclk.uart2_rxd */
++			0x130 (PIN_OUTPUT_PULLDOWN | MUX_MODE1)	/* gmii1_rxclk.uart2_txd */
++		>;
++	};
++
++	uart3_pins: pinmux_uart3_pins {
++		pinctrl-single,pins = <
++			0x134 (PIN_INPUT_PULLUP | MUX_MODE1)	/* gmii1_rxd3.uart3_rxd */
++			0x138 (PIN_OUTPUT_PULLDOWN | MUX_MODE1)	/* gmii1_rxd2.uart3_txd */
++		>;
++	};
++
++	i2c0_pins: pinmux_i2c0_pins {
++		pinctrl-single,pins = <
++			0x188 (PIN_INPUT_PULLUP | MUX_MODE0)	/* i2c0_sda.i2c0_sda */
++			0x18c (PIN_INPUT_PULLUP | MUX_MODE0)	/* i2c0_scl.i2c0_scl */
++		>;
++	};
++
++	spi0_pins: pinmux_spi0_pins {
++		pinctrl-single,pins = <
++			0x150 (INPUT_EN | MUX_MODE0)		/* spi0_sclk */
++			0x154 (PULL_UP | INPUT_EN | MUX_MODE0)	/* spi0_d0 */
++			0x158 (INPUT_EN | MUX_MODE0)		/* spi0_d1 */
++			0x15c (PULL_UP | INPUT_EN | MUX_MODE0)	/* spi0_cs0 */
++		>;
++	};
++
++	mmc1_pins: pinmux_mmc1_pins {
++		pinctrl-single,pins = <
++			0xf0 (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_dat3.mmc0_dat3 */
++			0xf4 (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_dat2.mmc0_dat2 */
++			0xf8 (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_dat1.mmc0_dat1 */
++			0xfc (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_dat0.mmc0_dat0 */
++			0x100 (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_clk.mmc0_clk */
++			0x104 (MUX_MODE0 | INPUT_EN | PULL_UP)	/* mmc0_cmd.mmc0_cmd */
++			0x160 (MUX_MODE7 | INPUT_EN | PULL_UP)	/* spi0_cs1.??, card detect */
++		>;
++	};
++
++	mmc2_pins: pinmux_mmc2_pins {
++		pinctrl-single,pins = <
++			0x88 (PIN_INPUT_PULLUP | MUX_MODE1) /* ggpmc_csn3.mmc1_cmd */
++			0x8c (PIN_INPUT_PULLUP | MUX_MODE3) /* gpmc_clk.mmc1_clk */
++			0x118 (PIN_INPUT_PULLUP | MUX_MODE5) /* gmii1_rxdv.mmc1_dat0 */
++			0x11c (PIN_INPUT_PULLUP | MUX_MODE5) /* gmii1_txd3.mmc1_dat1 */
++			0x120 (PIN_INPUT_PULLUP | MUX_MODE5) /* gmii1_txd2.mmc1_dat2 */
++			0x108 (PIN_INPUT_PULLUP | MUX_MODE5) /* gmii1_col.mmc1_dat3 */
++		>;
++	};
++
++	wl12xx_gpio: pinmux_wl12xx_gpio {
++		pinctrl-single,pins = <
++			0x164 (PIN_OUTPUT_PULLUP | MUX_MODE7) /* ecap0_in_pwm0_out.gpio0_7 */
++			0x1b4 (PIN_INPUT_PULLUP | MUX_MODE7) /* xdma_event_intr1.gpio0_20 */
++		>;
++	};
++
++	emac_rmii1_pins: pinmux_emac_rmii1_pins {
++		pinctrl-single,pins = <
++			0x10c (PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_crs.rmii1_crs_dv */
++			0x110 (PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxerr.rmii1_rxerr */
++			0x114 (PIN_OUTPUT | MUX_MODE1)		/* mii1_txen.rmii1_txen */
++			0x124 (PIN_OUTPUT | MUX_MODE1)		/* mii1_txd1.rmii1_txd1 */
++			0x128 (PIN_OUTPUT | MUX_MODE1)		/* mii1_txd0.rmii1_txd0 */
++			0x13c (PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxd1.rmii1_rxd1 */
++			0x140 (PIN_INPUT_PULLDOWN | MUX_MODE1)	/* mii1_rxd0.rmii1_rxd0 */
++			0x144 (PIN_INPUT_PULLDOWN | MUX_MODE0)	/* rmii1_refclk.rmii1_refclk */
++
++			/* Slave 2 */
++			0x40 (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a0.rgmii2_tctl */
++			0x44 (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a1.rgmii2_rctl */
++			0x48 (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a2.rgmii2_td3 */
++			0x4c (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a3.rgmii2_td2 */
++			0x50 (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a4.rgmii2_td1 */
++			0x54 (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a5.rgmii2_td0 */
++			0x58 (PIN_OUTPUT_PULLDOWN | MUX_MODE2)  /* gpmc_a6.rgmii2_tclk */
++			0x5c (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a7.rgmii2_rclk */
++			0x60 (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a8.rgmii2_rd3 */
++			0x64 (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a9.rgmii2_rd2 */
++			0x68 (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a10.rgmii2_rd1 */
++			0x6c (PIN_INPUT_PULLDOWN | MUX_MODE2)   /* gpmc_a11.rgmii2_rd0 */
++		>;
++	};
++
++	davinci_mdio_default: davinci_mdio_default {
++		pinctrl-single,pins = <
++			/* MDIO */
++			0x148 (PIN_INPUT_PULLUP | SLEWCTRL_FAST | MUX_MODE0)	/* mdio_data.mdio_data */
++			0x14c (PIN_OUTPUT_PULLUP | MUX_MODE0)			/* mdio_clk.mdio_clk */
++		>;
++	};
++
++	lcd_pins_s0: lcd_pins_s0 {
++		pinctrl-single,pins = <
++			0xa0 0x00	/* lcd_data0.lcd_data0, OUTPUT | MODE0 */
++			0xa4 0x00	/* lcd_data1.lcd_data1, OUTPUT | MODE0 */
++			0xa8 0x00	/* lcd_data2.lcd_data2, OUTPUT | MODE0 */
++			0xac 0x00	/* lcd_data3.lcd_data3, OUTPUT | MODE0 */
++			0xb0 0x00	/* lcd_data4.lcd_data4, OUTPUT | MODE0 */
++			0xb4 0x00	/* lcd_data5.lcd_data5, OUTPUT | MODE0 */
++			0xb8 0x00	/* lcd_data6.lcd_data6, OUTPUT | MODE0 */
++			0xbc 0x00	/* lcd_data7.lcd_data7, OUTPUT | MODE0 */
++			0xc0 0x00	/* lcd_data8.lcd_data8, OUTPUT | MODE0 */
++			0xc4 0x00	/* lcd_data9.lcd_data9, OUTPUT | MODE0 */
++			0xc8 0x00	/* lcd_data10.lcd_data10, OUTPUT | MODE0 */
++			0xcc 0x00	/* lcd_data11.lcd_data11, OUTPUT | MODE0 */
++			0xd0 0x00	/* lcd_data12.lcd_data12, OUTPUT | MODE0 */
++			0xd4 0x00	/* lcd_data13.lcd_data13, OUTPUT | MODE0 */
++			0xd8 0x00	/* lcd_data14.lcd_data14, OUTPUT | MODE0 */
++			0xdc 0x00	/* lcd_data15.lcd_data15, OUTPUT | MODE0 */
++			0x20 0x01	/* gpmc_ad8.lcd_data16, OUTPUT | MODE1 */
++			0x24 0x01	/* gpmc_ad9.lcd_data17, OUTPUT | MODE1 */
++			0x28 0x01	/* gpmc_ad10.lcd_data18, OUTPUT | MODE1 */
++			0x2c 0x01	/* gpmc_ad11.lcd_data19, OUTPUT | MODE1 */
++			0x30 0x01	/* gpmc_ad12.lcd_data20, OUTPUT | MODE1 */
++			0x34 0x01	/* gpmc_ad13.lcd_data21, OUTPUT | MODE1 */
++			0x38 0x01	/* gpmc_ad14.lcd_data22, OUTPUT | MODE1 */
++			0x3c 0x01	/* gpmc_ad15.lcd_data23, OUTPUT | MODE1 */
++			0xe0 0x00	/* lcd_vsync.lcd_vsync, OUTPUT | MODE0 */
++			0xe4 0x00	/* lcd_hsync.lcd_hsync, OUTPUT | MODE0 */
++			0xe8 0x00	/* lcd_pclk.lcd_pclk, OUTPUT | MODE0 */
++			0xec 0x00	/* lcd_ac_bias_en.lcd_ac_bias_en, OUTPUT | MODE0 */
++		>;
++	};
++
++	edt_ft5x06_pins: edt_ft5x06_pins {
++		pinctrl-single,pins = <
++        		/* gpmc_csn1.gpio1_30 */
++			0x80 (PIN_INPUT_PULLUP | MUX_MODE7)
++		>;
++	};
++
++	am335x_wega_audio_pins: am335x_wega_audio_pins {
++		pinctrl-single,pins = <
++			0x190 (PIN_INPUT_PULLUP | MUX_MODE0) /* mcasp0_aclkx */
++			0x194 (PIN_INPUT_PULLUP | MUX_MODE0) /* mcasp0_fsx */
++			0x198 (PIN_INPUT_PULLUP | MUX_MODE0) /*mcasp0_axr0 */
++			0x1a8 (PIN_OUTPUT_PULLUP | MUX_MODE0) /* mcasp0_axr1 */
++			0x1ac (PIN_INPUT_PULLUP | MUX_MODE0) /* n,mcasp0_ahclkx */
++		>;
++	};
++};
++
++&uart0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart0_pins>;
++
++	status = "okay";
++};
++
++&uart2 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart2_pins>;
++
++	status = "okay";
++};
++
++&uart3 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&uart3_pins>;
++
++	status = "okay";
++};
++
++&i2c0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&i2c0_pins>;
++
++	status = "okay";
++	clock-frequency = <400000>;
++
++	eeprom: 24c32@52 {
++		compatible = "atmel,24c32";
++		pagesize = <32>;
++		reg = <0x52>;
++	};
++
++	tps: tps@2d {
++		reg = <0x2d>;
++	};
++
++	tlv320aic3007: tlv320aic3007@18 {
++		compatible = "ti,tlv320aic3007";
++		reg = <0x18>;
++
++		/* Regulators */
++		AVDD-supply = <&vaux2_reg>;
++		IOVDD-supply = <&vaux2_reg>;
++		DRVDD-supply = <&vaux2_reg>;
++		DVDD-supply = <&vbat>;
++	};
++
++	polytouch: edt-ft5x06@38 {
++		compatible = "edt,edt-ft5x06";
++		reg = <0x38>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&edt_ft5x06_pins>;
++		interrupt-parent = <&gpio1>;
++		interrupts = <30 0>;
++	};
++};
++
++&edma {
++	status = "okay";
++};
++
++&mmc1 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc1_pins>;
++	//vmmc-supply = <&vmmc_reg>;
++	bus-width = <4>;
++	status = "okay";
++};
++
++&mmc2 {
++	status = "okay";
++	vmmc-supply = <&wl12xx_vmmc>;
++	ti,non-removable;
++	bus-width = <4>;
++	cap-power-off-card;
++	pinctrl-names = "default";
++	pinctrl-0 = <&mmc2_pins>;
++};
++
++&spi0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&spi0_pins>;
++	status = "okay";
++};
++
++&davinci_mdio {
++	pinctrl-names = "default";
++	pinctrl-0 = <&davinci_mdio_default>;
++};
++
++&phy_sel {
++	rmii-clock-ext;
++};
++
++&cpsw_emac0 {
++	phy_id = <&davinci_mdio>, <0>;
++	phy-mode = "rmii";
++	dual_emac_res_vlan = <1>;
++};
++
++&cpsw_emac1 {
++	phy_id = <&davinci_mdio>, <2>;
++	phy-mode = "rgmii";
++	dual_emac_res_vlan = <2>;
++};
++
++&mac {
++	pinctrl-names = "default";
++	pinctrl-0 = <&emac_rmii1_pins>;
++	dual_emac = <1>;
++};
++
++&usb {
++	status = "okay";
++
++	control@44e10620 {
++		status = "okay";
++	};
++
++	/* usb0 phy */
++	usb-phy@47401300 {
++		status = "okay";
++	};
++
++	/* usb1 phy */
++	usb-phy@47401b00 {
++		status = "okay";
++	};
++
++	/* usb0 */
++	usb@47401000 {
++		status = "okay";
++		dr_mode = "host";
++	};
++
++	/* usb1 */
++	usb@47401800 {
++		status = "okay";
++		dr_mode = "host";
++	};
++
++	dma-controller@47402000  {
++		status = "okay";
++	};
++};
++
++&mcasp0 {
++	pinctrl-names = "default";
++	pinctrl-0 = <&am335x_wega_audio_pins>;
++	status = "okay";
++
++	op-mode = <0>;
++	tdm-slots = <2>;
++	/* 4 serializers */
++	serial-dir = <  /* 0: INACTIVE, 1: TX, 2: RX */
++		2 1 0 0
++	>;
++	tx-num-evt = <1>;
++	rx-num-evt = <1>;
++};
++
++&elm {
++	status = "okay";
++};
++
++&sham {
++	status = "okay";
++};
++
++&aes {
++	status = "okay";
++};
++
++&lcdc {
++	status = "okay";
++};
++
++/* pmic */
++#include "tps65910.dtsi"
++
++&tps {
++	vcc1-supply = <&vbat>;
++	vcc2-supply = <&vbat>;
++	vcc3-supply = <&vbat>;
++	vcc4-supply = <&vbat>;
++	vcc5-supply = <&vbat>;
++	vcc6-supply = <&vbat>;
++	vcc7-supply = <&vbat>;
++	vccio-supply = <&vbat>;
++
++	regulators {
++		vrtc_reg: regulator@0 {
++			regulator-always-on;
++		};
++
++		vio_reg: regulator@1 {
++			regulator-always-on;
++		};
++
++		vdd1_reg: regulator@2 {
++			/* VDD_MPU voltage limits 0.95V - 1.26V with +/-4% tolerance */
++			regulator-name = "vdd_mpu";
++			regulator-min-microvolt = <912500>;
++			regulator-max-microvolt = <1312500>;
++			regulator-boot-on;
++			regulator-always-on;
++		};
++
++		vdd2_reg: regulator@3 {
++			/* VDD_CORE voltage limits 0.95V - 1.1V with +/-4% tolerance */
++			regulator-name = "vdd_core";
++			regulator-min-microvolt = <912500>;
++			regulator-max-microvolt = <1150000>;
++			regulator-boot-on;
++			regulator-always-on;
++		};
++
++		vdd3_reg: regulator@4 {
++			regulator-always-on;
++		};
++
++		vdig1_reg: regulator@5 {
++			regulator-always-on;
++		};
++
++		vdig2_reg: regulator@6 {
++			regulator-always-on;
++		};
++
++		vpll_reg: regulator@7 {
++			regulator-always-on;
++		};
++
++		vdac_reg: regulator@8 {
++			regulator-always-on;
++		};
++
++		vaux1_reg: regulator@9 {
++			regulator-always-on;
++		};
++
++		vaux2_reg: regulator@10 {
++			regulator-always-on;
++		};
++
++		vaux33_reg: regulator@11 {
++			regulator-always-on;
++		};
++
++		vmmc_reg: regulator@12 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <3300000>;
++			regulator-always-on;
++		};
++	};
++};
++
+-- 
+1.8.5.3
+
